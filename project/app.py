@@ -110,8 +110,24 @@ def open_note(message, note_id):
 
     bot.send_message(message.chat.id,f'[{note_id}] Редагувати:', reply_markup=keyboard)
 
-def edit_note(message, note_id):
-    pass
+def edit_note(call, note_id):
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+    bot.send_message(call.message.chat.id, 'Введіть новий текст:')
+    bot.register_next_step_handler_by_chat_id(call.message.chat.id, edit_and_save_note, note_id)
+
+def edit_and_save_note(message, note_id):
+    db = sqlite3.connect(c.DB_NAME)
+    cur = db.cursor()
+    cur.execute("UPDATE notes SET title=? WHERE id=?", ( message.text,note_id))
+    db.commit()
+
+    if cur.rowcount > 0:
+        bot.send_message(message.chat.id, 'Нотатка оновлена!')
+    else:
+        bot.send_message(message.chat.id, 'Щось пішло не так :( ')
+
+    cur.close()
+    db.close()
 
 def time_note(message, note_id):
     pass
@@ -135,10 +151,7 @@ def delete_note(call, note_id):
 
 # start - підписка
 # add - додати
-# edit - редагувати
-# delete - видалити
 # all - показати всі
-# day - показати за день
 # end - відписатися
 
 # Обробник команд від користувача
